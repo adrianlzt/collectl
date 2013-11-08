@@ -488,7 +488,7 @@ sub graphite
       }
       else
       {
-      $vmSize=$vmLck=$vmRSS=$vmData=$vmStk=$vmLib=$vmExe=0;
+        $vmSize=$vmLck=$vmRSS=$vmData=$vmStk=$vmLib=$vmExe=0;
       }
       
       if ($processIOFlag)
@@ -500,9 +500,13 @@ sub graphite
         $rsys=$procRSys[$i]; 
         $wsys=$procWSys[$i]; 
         $cncl=$procCKB[$i];
+        $readtot=$procRBytesLast[$i];
+        $writetot=$procWBytesLast[$i];
         
-        sendData("process.$name.$pid.io.read", 'bytes/sec', ($rkb*1024)/$intSecs);
-        sendData("process.$name.$pid.io.write", 'bytes/sec', ($wkb*1024)/$intSecs);
+        sendData("process.$name.$pid.io.readpersec", 'bytes/sec', ($rkb*1024)/$intSecs);
+        sendData("process.$name.$pid.io.writepersec", 'bytes/sec', ($wkb*1024)/$intSecs);
+        sendData("process.$name.$pid.io.read", 'bytes', $readtot);
+        sendData("process.$name.$pid.io.write", 'bytes', $writetot);
       }
     }
   }
