@@ -19,3 +19,4 @@ Potential problems:
 - aggregate info in collectl or in graphite (aggregation-rules.conf) ?
 - lot of data to send to graphite
 - how do you choose which subset to send?
+- reused pids?
