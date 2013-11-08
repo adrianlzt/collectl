@@ -290,7 +290,7 @@ sub graphite
         for (my $i=0; $i<$NumLustreFS; $i++)
         {
           sendData("lusost.reads.$lustreCltFS[$i]",    'reads/sec',    $lustreCltRead[$i]/$intSecs);
-	  sendData("lusost.readkbs.$lustreCltFS[$i]",  'readkbs/sec',  $lustreCltReadKB[$i]/$intSecs);
+          sendData("lusost.readkbs.$lustreCltFS[$i]",  'readkbs/sec',  $lustreCltReadKB[$i]/$intSecs);
           sendData("lusost.writes.$lustreCltFS[$i]",   'writes/sec',   $lustreCltWrite[$i]/$intSecs);
           sendData("lusost.writekbs.$lustreCltFS[$i]", 'writekbs/sec', $lustreCltWriteKB[$i]/$intSecs);
         }
@@ -441,7 +441,72 @@ sub graphite
       }
     }
   }
+  
+  if ($graphiteSubsys=~/Z/)
+  {
+  	foreach my $pid (keys %procIndexes)
+    {
+      my $i=$procIndexes{$pid};
+      my $user=$procUser[$i];
+      my $ppid=$procPpid[$i];
+      my $threads=$procTCount[$i];
+      my $cpu=$procCPU[$i];
+      my $sysT=$procSTime[$i];
+      my $usrT=$procUTime[$i];
+      my $accum=cvtT1($procSTimeTot[$i]+$procUTimeTot[$i]);
+      my $majF=$procMajFlt[$i];
+      my $minF=$procMinFlt[$i];
+      my $command=(defined($procCmd[$i])) ? $procCmd[$i] : $procName[$i];
+      my $proc = $procCmd[$i];
+      my $name = $procName[$i];
 
+      $accum=~s/^\s*//g;
+      $command=~s/\s+$//g;
+      
+      # sysT and usrT are in jiffies. 
+      # Divide by $HZ=POSIX::sysconf(&POSIX::_SC_CLK_TCK); to obtains secs
+      sendData("process.$name.$pid.sysT", 'jiffies', $sysT);
+      sendData("process.$name.$pid.usrT", 'jiffies', $usrT);
+      sendData("process.$name.$pid.accum", 'secs', $accum, 2);
+      sendData("process.$name.$pid.threads", 'threads', $threads);
+      sendData("process.$name.$pid.majflt", 'major page fault/sec', $majF/$intSecs);
+      sendData("process.$name.$pid.minflt", 'minor page fault/sec', $minF/$intSecs);
+      
+
+      if (defined($procVmSize[$i]))
+      {
+        $vmSize=$procVmSize[$i];
+        $vmLck=$procVmLck[$i];
+        $vmRSS=$procVmRSS[$i];
+        $vmData=$procVmData[$i];
+        $vmStk=$procVmStk[$i];
+        $vmLib=$procVmLib[$i];
+        $vmExe=$procVmExe[$i];
+        
+        sendData("process.$name.$pid.mem.VSZ", 'bytes', $vmSize);
+        sendData("process.$name.$pid.mem.RSS", 'bytes', $vmRSS);
+      }
+      else
+      {
+      $vmSize=$vmLck=$vmRSS=$vmData=$vmStk=$vmLib=$vmExe=0;
+      }
+      
+      if ($processIOFlag)
+      {
+        $rkb=$procRKB[$i];   
+        $wkb=$procWKB[$i];   
+        $rkbc=$procRKBC[$i]; 
+        $wkbc=$procWKBC[$i];
+        $rsys=$procRSys[$i]; 
+        $wsys=$procWSys[$i]; 
+        $cncl=$procCKB[$i];
+        
+        sendData("process.$name.$pid.io.read", 'bytes/sec', ($rkb*1024)/$intSecs);
+        sendData("process.$name.$pid.io.write", 'bytes/sec', ($wkb*1024)/$intSecs);
+      }
+    }
+  }
+  
   my (@names, @units, @vals);
   for (my $i=0; $i<$impNumMods; $i++) { &{$impPrintExport[$i]}('g', \@names, \@units, \@vals); }
   foreach (my $i=0; $i<scalar(@names); $i++)
