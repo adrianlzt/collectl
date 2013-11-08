@@ -444,6 +444,9 @@ sub graphite
   
   if ($graphiteSubsys=~/Z/)
   {
+  	# Hash to aggregate data by process name
+  	my %agg;
+  	
   	foreach my $pid (keys %procIndexes)
     {
       my $i=$procIndexes{$pid};
@@ -472,6 +475,13 @@ sub graphite
       sendData("process.$name.$pid.majflt", 'major page fault/sec', $majF/$intSecs);
       sendData("process.$name.$pid.minflt", 'minor page fault/sec', $minF/$intSecs);
       
+      $agg{"process.$name.sysT"} += $sysT;
+      $agg{"process.$name.usrT"} += $usrT;
+      $agg{"process.$name.accum"} += $accum;
+      $agg{"process.$name.threads"} += $threads;
+      $agg{"process.$name.majflt"} += $majF/$intSecs;
+      $agg{"process.$name.minflt"} += $minF/$intSecs;
+
 
       if (defined($procVmSize[$i]))
       {
@@ -485,6 +495,9 @@ sub graphite
         
         sendData("process.$name.$pid.mem.VSZ", 'bytes', $vmSize);
         sendData("process.$name.$pid.mem.RSS", 'bytes', $vmRSS);
+        
+        $agg{"process.$name.mem.VSZ"} += $vmSize;
+        $agg{"process.$name.mem.RSS"} += $vmRSS;
       }
       else
       {
@@ -507,8 +520,21 @@ sub graphite
         sendData("process.$name.$pid.io.writepersec", 'bytes/sec', ($wkb*1024)/$intSecs);
         sendData("process.$name.$pid.io.read", 'bytes', $readtot);
         sendData("process.$name.$pid.io.write", 'bytes', $writetot);
+        
+        $agg{"process.$name.mem.io.readpersec"} += ($rkb*1024)/$intSecs;
+        $agg{"process.$name.mem.io.writepersec"} += ($wkb*1024)/$intSecs;
+        $agg{"process.$name.mem.io.read"} += $readtot;
+        $agg{"process.$name.mem.io.write"} += $writetot;
       }
     }
+    
+    # Send aggregated data per process
+    keys %agg;
+	while ( my($k,$v) = each %agg) {
+      sendData($k, '', $v, 2);
+	}
+    
+    
   }
   
   my (@names, @units, @vals);
