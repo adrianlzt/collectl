@@ -521,10 +521,10 @@ sub graphite
         sendData("process.$name.$pid.io.read", 'bytes', $readtot);
         sendData("process.$name.$pid.io.write", 'bytes', $writetot);
         
-        $agg{"process.$name.mem.io.readpersec"} += ($rkb*1024)/$intSecs;
-        $agg{"process.$name.mem.io.writepersec"} += ($wkb*1024)/$intSecs;
-        $agg{"process.$name.mem.io.read"} += $readtot;
-        $agg{"process.$name.mem.io.write"} += $writetot;
+        $agg{"process.$name.io.readpersec"} += ($rkb*1024)/$intSecs;
+        $agg{"process.$name.io.writepersec"} += ($wkb*1024)/$intSecs;
+        $agg{"process.$name.io.read"} += $readtot;
+        $agg{"process.$name.io.write"} += $writetot;
       }
     }
     
