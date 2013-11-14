@@ -462,6 +462,9 @@ sub graphite
       my $command=(defined($procCmd[$i])) ? $procCmd[$i] : $procName[$i];
       my $proc = $procCmd[$i];
       my $name = $procName[$i];
+      
+      # Change dots with -
+      $name=~s/\./-/g;
 
       $accum=~s/^\s*//g;
       $command=~s/\s+$//g;
